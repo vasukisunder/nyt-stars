@@ -1,7 +1,7 @@
 import axios from 'axios';
 
-// Use environment variable or fallback to the one you're currently using
-const NYT_API_KEY = import.meta.env.VITE_NYT_API_KEY || "sgNq3YMInuHu0e2imoGXGGVZ1GckMLof";
+// Use environment variable only - no hardcoded fallback
+const NYT_API_KEY = import.meta.env.VITE_NYT_API_KEY;
 const BASE_URL = 'https://api.nytimes.com/svc';
 
 console.log('API Key available:', NYT_API_KEY ? 'Yes (length: ' + NYT_API_KEY.length + ')' : 'No');
