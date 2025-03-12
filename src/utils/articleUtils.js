@@ -1,5 +1,6 @@
 // Section to color mapping
 export const sectionColors = {
+  // Core sections
   'world': '#4285F4',     // Blue
   'us': '#34A853',        // Green
   'politics': '#EA4335',  // Red
@@ -14,42 +15,64 @@ export const sectionColors = {
   'food': '#8BC34A',      // Light Green
   'travel': '#03A9F4',    // Light Blue
   'magazine': '#FF5722',  // Deep Orange
-  'realestate': '#607D8B', // Blue Gray
-  'opinion': '#9E9E9E',   // Gray
-  'default': '#424242'    // Dark Gray
-};
 
-// Additional vibrant colors for sections without predefined colors
-const additionalColors = [
-  '#00BCD4', // Cyan
-  '#673AB7', // Deep Purple
-  '#CDDC39', // Lime
-  '#2196F3', // Blue
-  '#009688', // Teal
-  '#FFC107', // Amber
-  '#9C27B0', // Purple
-  '#FF5722', // Deep Orange
-  '#4CAF50', // Green
-  '#3F51B5', // Indigo
-  '#E91E63', // Pink
-  '#8BC34A', // Light Green
-  '#00BCD4', // Cyan
-  '#FF9800', // Orange
-  '#9E9E9E', // Grey
-  '#607D8B'  // Blue Grey
-];
-
-// Cache for dynamically assigned colors to ensure consistency
-const dynamicColorCache = {};
-let colorIndex = 0;
-
-// Generate a hash code from a string (for consistent color mapping)
-const hashCode = (str) => {
-  let hash = 0;
-  for (let i = 0; i < str.length; i++) {
-    hash = str.charCodeAt(i) + ((hash << 5) - hash);
-  }
-  return Math.abs(hash);
+  // Additional sections with manually assigned colors
+  'opinion': '#9575CD',   // Light Purple
+  'education': '#00BCD4', // Cyan
+  'upshot': '#26A69A',    // Teal/Green
+  'climate': '#43A047',   // Medium Green
+  'multimedia': '#5D4037', // Dark Brown
+  'movies': '#D81B60',    // Pink/Red
+  'theater': '#C62828',   // Deep Red
+  'television': '#6A1B9A', // Deep Purple
+  'music': '#283593',     // Indigo
+  'obituaries': '#546E7A', // Blue Grey
+  'insider': '#0288D1',   // Light Blue
+  'nyregion': '#00796B',  // Teal
+  'sundayreview': '#FFA000', // Amber
+  'fashion': '#AD1457',   // Deep Pink
+  'dining': '#AFB42B',    // Light Green/Yellow
+  'well': '#00ACC1',      // Light Cyan
+  'realestate': '#5E35B1', // Deep Purple
+  'automobiles': '#F57C00', // Dark Orange
+  'jobs': '#3949AB',      // Indigo
+  'podcasts': '#039BE5',  // Light Blue
+  'parenting': '#7CB342', // Light Green
+  'smarter-living': '#00897B', // Teal
+  'game': '#7C4DFF',      // Deep Purple
+  'lens': '#6D4C41',      // Brown
+  'economy': '#00838F',   // Teal
+  'briefing': '#3F51B5',  // Indigo
+  'live': '#D32F2F',      // Red
+  'media': '#0D47A1',     // Dark Blue
+  
+  // More sections observed in API data
+  'admin': '#607D8B',     // Blue Gray
+  'foreign': '#1565C0',   // Strong Blue
+  'national': '#2E7D32',  // Forest Green
+  'metro': '#00BFA5',     // Teal/Green
+  'weekender': '#C0CA33', // Lime
+  'culture': '#D84315',   // Deep Orange
+  'homepage': '#6200EA',  // Deep Purple
+  'research': '#00B8D4',  // Light Cyan
+  'international': '#1A237E', // Dark Indigo
+  'corrections': '#6D4C41', // Brown
+  'letters': '#B388FF',   // Light Purple
+  'watches': '#DD2C00',   // Red/Orange
+  'personaltech': '#6200EA', // Deep Purple
+  'entrepreneurship': '#00695C', // Dark Teal
+  'your-money': '#FFC400', // Amber
+  'dealbook': '#1B5E20',  // Dark Green 
+  'australia': '#0091EA', // Light Blue
+  'asia': '#00BFA5',      // Teal/Green
+  'europe': '#304FFE',    // Bright Blue
+  'africa': '#DD2C00',    // Red/Orange
+  'americas': '#1B5E20',  // Dark Green
+  'middle-east': '#FF6F00', // Orange
+  'universal': '#512DA8', // Deep Purple
+  
+  // Default color for any unmapped sections
+  'default': '#9E9E9E'    // Gray
 };
 
 // Get color for a section
@@ -58,25 +81,8 @@ export const getSectionColor = (section) => {
   
   const normalizedSection = section.toLowerCase();
   
-  // If we have a predefined color, use it
-  if (sectionColors[normalizedSection]) {
-    return sectionColors[normalizedSection];
-  }
-  
-  // If we've already assigned a dynamic color to this section, reuse it
-  if (dynamicColorCache[normalizedSection]) {
-    return dynamicColorCache[normalizedSection];
-  }
-  
-  // Assign a new color from the additional colors array
-  // Use consistent hash-based assignment so the same section always gets the same color
-  const hash = hashCode(normalizedSection);
-  const color = additionalColors[hash % additionalColors.length];
-  
-  // Cache the color for future use
-  dynamicColorCache[normalizedSection] = color;
-  
-  return color;
+  // Return the predefined color or default gray
+  return sectionColors[normalizedSection] || sectionColors.default;
 };
 
 // Calculate article size based on engagement metrics
