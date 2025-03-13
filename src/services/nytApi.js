@@ -89,10 +89,11 @@ testApiKey().then(result => {
   console.log('API key test result:', result);
 });
 
-// Newswire API (real-time articles)
-export const fetchLatestArticles = async (source = 'all', section = 'all', limit = 20) => {
+// Newswire API for latest articles
+export const fetchLatestArticles = async (source = 'all', section = 'all', limit = 100) => {
   try {
     console.log(`Fetching latest articles: source=${source}, section=${section}, limit=${limit}`);
+    // Revert to the standard endpoint format which works
     const url = `/${source}/${section}.json`;
     console.log(`Newswire API URL: ${newswireApi.defaults.baseURL}${url}`);
     
@@ -106,30 +107,21 @@ export const fetchLatestArticles = async (source = 'all', section = 'all', limit
     }
     
     console.log(`Received ${response.data.results.length} latest articles`);
-    return response.data.results;
+    
+    // Filter for articles within the last 24 hours on the client side
+    const twentyFourHoursAgo = new Date();
+    twentyFourHoursAgo.setHours(twentyFourHoursAgo.getHours() - 24);
+    
+    const recentArticles = response.data.results.filter(article => {
+      const pubDate = new Date(article.published_date || article.pub_date);
+      return pubDate >= twentyFourHoursAgo;
+    });
+    
+    console.log(`Filtered to ${recentArticles.length} articles from the last 24 hours`);
+    
+    return recentArticles.length > 0 ? recentArticles : response.data.results;
   } catch (error) {
     return handleApiError(error, 'Newswire API');
-  }
-};
-
-// Most Popular API (popular articles)
-export const fetchMostPopular = async (period = 1) => {
-  try {
-    console.log(`Fetching most popular articles for period: ${period}`);
-    const url = `/viewed/${period}.json`;
-    console.log(`Popular API URL: ${popularApi.defaults.baseURL}${url}`);
-    
-    const response = await popularApi.get(url);
-    
-    if (!response.data || !response.data.results) {
-      console.error('Invalid response from Most Popular API:', response.data);
-      throw new Error('Invalid response from NYT Most Popular API');
-    }
-    
-    console.log(`Received ${response.data.results.length} popular articles`);
-    return response.data.results;
-  } catch (error) {
-    return handleApiError(error, 'Most Popular API');
   }
 };
 

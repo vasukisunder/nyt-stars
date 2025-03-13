@@ -67,27 +67,39 @@ const ToggleContainer = styled.div`
   position: absolute;
   top: 20px;
   right: 20px;
-  background-color: rgba(10, 10, 15, 0.75);
-  color: white;
-  padding: 16px 20px;
-  border-radius: 2px;
+  background-color: rgba(10, 10, 15, 0.8);
+  backdrop-filter: blur(10px);
+  padding: 16px;
   z-index: 100;
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
+  min-width: 200px;
+  max-width: 320px;
+  border-radius: 2px;
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-  font-weight: 300;
-  backdrop-filter: blur(8px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
-  border-left: 2px solid rgba(255, 255, 255, 0.3);
+  border-left: 2px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
   
-  h3 {
-    font-size: 15px;
-    margin: 0 0 10px 0;
-    font-weight: 400;
-    opacity: 0.9;
-    letter-spacing: 0.05em;
-    text-transform: uppercase;
+  .toggle-header {
+    display: flex;
+    flex-direction: column;
+    margin-bottom: 16px;
+    
+    span:first-child {
+      font-size: 16px;
+      font-weight: 500;
+      margin-bottom: 4px;
+      color: white;
+    }
+    
+    span:last-child {
+      font-size: 13px;
+      color: rgba(255, 255, 255, 0.7);
+    }
+  }
+  
+  .toggle-buttons {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
   }
 `;
 
@@ -110,125 +122,107 @@ const ToggleButton = styled.button`
   }
 `;
 
-// Neo-modernist article modal overlay with reduced spacing and smaller text
+// Article overlay
 const ArticleOverlay = styled.div`
   position: fixed;
   top: 0;
   left: 0;
-  width: 100%;
-  height: 100%;
-  background-color: rgba(5, 5, 10, 0.85);
+  right: 0;
+  bottom: 0;
+  background-color: rgba(5, 5, 16, 0.85);
   backdrop-filter: blur(8px);
   display: flex;
   align-items: center;
   justify-content: center;
   z-index: 1000;
-  opacity: 0;
-  animation: fadeIn 0.3s forwards;
-  
-  @keyframes fadeIn {
-    to { opacity: 1; }
-  }
+  padding: 20px;
 `;
 
+// Article focus card
 const ArticleFocusCard = styled.div`
-  background-color: rgba(15, 15, 22, 0.95);
+  background-color: #0a0a1a;
   color: white;
-  padding: 28px;
   border-radius: 2px;
-  width: 650px;
-  max-width: 90vw;
-  max-height: 85vh;
+  padding: 24px;
+  width: 100%;
+  max-width: 800px;
+  max-height: 90vh;
   overflow-y: auto;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+  border-left: 2px solid rgba(255, 255, 255, 0.3);
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-  border-left: 3px solid rgba(255, 255, 255, 0.2);
-  transform: translateX(-30px);
-  animation: slideIn 0.3s forwards;
   
-  @keyframes slideIn {
-    to { transform: translateX(0); }
-  }
-  
-  h2 {
-    font-size: 22px;
-    margin: 0 0 18px 0;
-    font-weight: 400;
-    line-height: 1.4;
-    letter-spacing: -0.01em;
-  }
-  
-  .section {
-    display: inline-block;
-    padding: 5px 10px;
-    border-radius: 0;
-    font-size: 11px;
-    font-weight: 500;
-    margin-bottom: 16px;
-    letter-spacing: 0.05em;
-    text-transform: uppercase;
-    border-left: 2px solid;
-  }
-  
-  .date {
-    font-size: 14px;
+  .article-header {
     margin-bottom: 20px;
-    color: rgba(255, 255, 255, 0.7);
-    font-weight: 300;
-  }
-  
-  .abstract {
-    font-size: 15px;
-    line-height: 1.6;
-    margin-bottom: 24px;
-    font-weight: 300;
-    border-left: 2px solid rgba(255, 255, 255, 0.2);
-    padding-left: 16px;
-    color: rgba(255, 255, 255, 0.9);
-  }
-  
-  .buttons {
-    display: flex;
-    justify-content: space-between;
-    margin-top: 24px;
-    border-top: 1px solid rgba(255, 255, 255, 0.1);
-    padding-top: 20px;
-  }
-  
-  button {
-    background-color: transparent;
-    color: rgba(255, 255, 255, 0.8);
-    border: none;
-    border-left: 2px solid rgba(255, 255, 255, 0.3);
-    padding: 10px 16px;
-    cursor: pointer;
-    font-size: 14px;
-    font-weight: 300;
-    transition: all 0.2s ease;
-    letter-spacing: 0.03em;
     
-    &:hover {
-      background-color: rgba(255, 255, 255, 0.05);
-      color: white;
-      transform: translateX(4px);
+    h2 {
+      font-size: 24px;
+      margin: 0 0 12px 0;
+      line-height: 1.3;
+      font-weight: 500;
+    }
+    
+    .section-tag {
+      display: inline-block;
+      padding: 4px 10px;
+      border-radius: 2px;
+      font-size: 12px;
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
     }
   }
   
-  a {
-    display: inline-block;
-    background-color: rgba(255, 255, 255, 0.1);
-    color: white;
-    text-decoration: none;
-    padding: 10px 16px;
+  .article-abstract {
+    font-size: 18px;
+    line-height: 1.6;
+    margin-bottom: 20px;
+    color: rgba(255, 255, 255, 0.9);
+  }
+  
+  .article-byline {
     font-size: 14px;
-    font-weight: 400;
-    letter-spacing: 0.03em;
-    transition: all 0.2s ease;
-    border-left: 2px solid #007bff;
+    margin-bottom: 20px;
+    color: rgba(255, 255, 255, 0.7);
+  }
+  
+  .article-meta {
+    font-size: 14px;
+    color: rgba(255, 255, 255, 0.6);
+    margin-bottom: 24px;
+  }
+  
+  .article-actions {
+    display: flex;
+    gap: 12px;
     
-    &:hover {
-      background-color: rgba(0, 123, 255, 0.2);
-      transform: translateX(4px);
+    .read-more-btn {
+      background-color: rgba(0, 120, 255, 0.8);
+      color: white;
+      text-decoration: none;
+      padding: 10px 16px;
+      border-radius: 2px;
+      font-size: 14px;
+      border: none;
+      cursor: pointer;
+      
+      &:hover {
+        background-color: rgba(0, 120, 255, 1);
+      }
+    }
+    
+    .close-btn {
+      background-color: rgba(255, 255, 255, 0.1);
+      color: white;
+      padding: 10px 16px;
+      border-radius: 2px;
+      font-size: 14px;
+      border: none;
+      cursor: pointer;
+      
+      &:hover {
+        background-color: rgba(255, 255, 255, 0.2);
+      }
     }
   }
 `;
@@ -286,6 +280,51 @@ const UpdateNotification = styled.div`
     transform: translateX(0);
     opacity: 1;
   }
+`;
+
+// Modify the SectionFilterButton to make the color indicator more prominent
+const SectionFilterButton = styled.button`
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background-color: ${props => props.active ? 'rgba(255, 255, 255, 0.1)' : 'rgba(10, 10, 15, 0.6)'};
+  color: white;
+  border: none;
+  padding: 8px 12px;
+  margin: 4px 0;
+  border-radius: 0;
+  cursor: pointer;
+  font-weight: ${props => props.active ? '400' : '300'};
+  font-size: 13px;
+  transition: all 0.2s ease;
+  letter-spacing: 0.02em;
+  border-left: ${props => props.active ? '2px solid rgba(255, 255, 255, 0.6)' : '2px solid transparent'};
+  text-align: left;
+  width: 100%;
+  text-transform: capitalize;
+  
+  &:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+    transform: translateX(2px);
+  }
+`;
+
+// Add a color indicator component for the buttons
+const ColorIndicator = styled.div`
+  width: 12px;
+  height: 12px;
+  border-radius: 2px;
+  flex-shrink: 0;
+`;
+
+// Container for section filters
+const SectionFilterContainer = styled.div`
+  max-height: 300px;
+  overflow-y: auto;
+  margin-top: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
 `;
 
 // Background Star component (non-interactive)
@@ -351,7 +390,7 @@ const BackgroundStars = ({ count = 300 }) => {
 };
 
 // Article Star component (interactive)
-const ArticleStar = ({ article, index, articleType, onSelectArticle, isNew }) => {
+const ArticleStar = ({ article, index, onSelectArticle, isNew }) => {
   const meshRef = useRef();
   const glowRef = useRef();
   const [hovered, setHovered] = useState(false);
@@ -363,22 +402,13 @@ const ArticleStar = ({ article, index, articleType, onSelectArticle, isNew }) =>
   
   // Calculate position only once and store it
   useEffect(() => {
-    if (articleType === 'popular') {
-      // Position popular articles further back
-      positionRef.current = [
-        (Math.random() - 0.5) * 150,
-        (Math.random() - 0.5) * 60,
-        (Math.random() - 0.5) * 150 - 50 // Push further back
-      ];
-    } else {
-      // Position latest articles more centered
-      positionRef.current = [
-        (Math.random() - 0.5) * 100,
-        (Math.random() - 0.5) * 40,
-        (Math.random() - 0.5) * 100
-      ];
-    }
-  }, [articleType]);
+    // Position articles in a distributed pattern
+    positionRef.current = [
+      (Math.random() - 0.5) * 100,
+      (Math.random() - 0.5) * 40,
+      (Math.random() - 0.5) * 100
+    ];
+  }, []);
   
   // Size - make the stars more visible
   const size = 0.7;
@@ -531,20 +561,13 @@ function formatDate(dateString) {
 const StarfieldVisualization = () => {
   const { 
     latestArticles, 
-    popularArticles, 
     isLoadingLatest, 
-    isLoadingPopular,
-    latestError,
-    popularError
+    latestError
   } = useNews();
-  
-  // State for article type toggles
-  const [showLatest, setShowLatest] = useState(true);
-  const [showPopular, setShowPopular] = useState(true);
-  const [showSectionFilter, setShowSectionFilter] = useState(false);
   
   // State for section filtering
   const [selectedSections, setSelectedSections] = useState([]);
+  const [showSectionFilter, setShowSectionFilter] = useState(false);
   
   // State for selected article
   const [selectedArticle, setSelectedArticle] = useState(null);
@@ -555,10 +578,7 @@ const StarfieldVisualization = () => {
   const [showNotification, setShowNotification] = useState(false);
   const [notificationCount, setNotificationCount] = useState(0);
   
-  const [articleCount, setArticleCount] = useState({
-    latest: 0,
-    popular: 0
-  });
+  const [articleCount, setArticleCount] = useState(0);
 
   // Get unique sections from articles
   const uniqueSections = useMemo(() => {
@@ -568,12 +588,8 @@ const StarfieldVisualization = () => {
       latestArticles.forEach(article => sections.add(article.section));
     }
     
-    if (popularArticles?.length) {
-      popularArticles.forEach(article => sections.add(article.section));
-    }
-    
     return [...sections].sort();
-  }, [latestArticles, popularArticles]);
+  }, [latestArticles]);
 
   // Toggle a section for filtering
   const toggleSection = useCallback((section) => {
@@ -599,28 +615,18 @@ const StarfieldVisualization = () => {
   }, []);
 
   // Filter articles based on selected sections
-  const filteredLatestArticles = useMemo(() => {
+  const filteredArticles = useMemo(() => {
     if (selectedSections.length === 0) {
       return latestArticles;
     }
     return latestArticles?.filter(article => selectedSections.includes(article.section)) || [];
   }, [latestArticles, selectedSections]);
 
-  const filteredPopularArticles = useMemo(() => {
-    if (selectedSections.length === 0) {
-      return popularArticles;
-    }
-    return popularArticles?.filter(article => selectedSections.includes(article.section)) || [];
-  }, [popularArticles, selectedSections]);
-
   useEffect(() => {
     if (latestArticles?.length) {
-      setArticleCount(prev => ({ ...prev, latest: latestArticles.length }));
+      setArticleCount(latestArticles.length);
     }
-    if (popularArticles?.length) {
-      setArticleCount(prev => ({ ...prev, popular: popularArticles.length }));
-    }
-  }, [latestArticles, popularArticles]);
+  }, [latestArticles]);
 
   // Track new articles when latestArticles changes
   useEffect(() => {
@@ -678,45 +684,8 @@ const StarfieldVisualization = () => {
     };
   }, [selectedArticle]);
 
-  // Modify the SectionFilterButton to make the color indicator more prominent
-  const SectionFilterButton = styled.button`
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    background-color: ${props => props.active ? `${getSectionColor(props.section)}40` : 'rgba(10, 10, 15, 0.6)'};
-    color: white;
-    border: none;
-    padding: 8px 12px;
-    margin: 4px 0;
-    border-radius: 0;
-    cursor: pointer;
-    font-weight: ${props => props.active ? '400' : '300'};
-    font-size: 13px;
-    transition: all 0.2s ease;
-    letter-spacing: 0.02em;
-    border-left: ${props => props.active ? `2px solid ${getSectionColor(props.section)}` : '2px solid transparent'};
-    text-align: left;
-    width: 100%;
-    text-transform: capitalize;
-    
-    &:hover {
-      background-color: ${props => props.active ? `${getSectionColor(props.section)}40` : 'rgba(255, 255, 255, 0.1)'};
-      transform: translateX(2px);
-    }
-  `;
-
-  // Add a color indicator component for the buttons
-  const ColorIndicator = styled.div`
-    width: 12px;
-    height: 12px;
-    border-radius: 2px;
-    background-color: ${props => props.color};
-    flex-shrink: 0;
-  `;
-
   // Display loading state
-  if ((isLoadingLatest && latestArticles.length === 0) && 
-      (isLoadingPopular && popularArticles.length === 0)) {
+  if (isLoadingLatest && latestArticles.length === 0) {
     return (
       <LoadingContainer>
         <h3>Loading NYT News Starfield</h3>
@@ -727,12 +696,11 @@ const StarfieldVisualization = () => {
   }
 
   // Display error state
-  if ((latestError || popularError) && latestArticles.length === 0 && popularArticles.length === 0) {
+  if (latestError && latestArticles.length === 0) {
     return (
       <ErrorContainer>
         <h3>Error Loading Data</h3>
-        {latestError && <p>Latest Articles: {latestError}</p>}
-        {popularError && <p>Popular Articles: {popularError}</p>}
+        <p>{latestError}</p>
         <p>Please check your API key and connection.</p>
       </ErrorContainer>
     );
@@ -751,8 +719,8 @@ const StarfieldVisualization = () => {
         {/* Background stars (non-interactive) */}
         <BackgroundStars count={400} />
         
-        {/* Latest articles as stars - only show if toggle is on */}
-        {showLatest && filteredLatestArticles && filteredLatestArticles.length > 0 && filteredLatestArticles.map((article, index) => {
+        {/* Articles as stars */}
+        {filteredArticles && filteredArticles.length > 0 && filteredArticles.map((article, index) => {
           // Check if this article is new
           const articleId = article.uri || article.url || article.id || JSON.stringify(article);
           const isNewArticle = newArticles.some(a => 
@@ -764,24 +732,11 @@ const StarfieldVisualization = () => {
               key={`article-${index}`} 
               article={article} 
               index={index}
-              articleType="latest"
               onSelectArticle={handleSelectArticle}
               isNew={isNewArticle}
             />
           );
         })}
-        
-        {/* Popular articles as stars - only show if toggle is on */}
-        {showPopular && filteredPopularArticles && filteredPopularArticles.length > 0 && filteredPopularArticles.map((article, index) => (
-          <ArticleStar 
-            key={`popular-${index}`} 
-            article={article} 
-            index={index} 
-            articleType="popular"
-            onSelectArticle={handleSelectArticle}
-            isNew={false}
-          />
-        ))}
         
         {/* Controls */}
         <OrbitControls
@@ -801,84 +756,71 @@ const StarfieldVisualization = () => {
       {selectedArticle && (
         <ArticleOverlay onClick={handleCloseArticle}>
           <ArticleFocusCard onClick={(e) => e.stopPropagation()}>
-            <h2>{selectedArticle.title}</h2>
-            <div 
-              className="section" 
-              style={{ borderColor: getSectionColor(selectedArticle.section) }}
-            >
-              {selectedArticle.section}
+            <div className="article-header">
+              <h2>{selectedArticle.title}</h2>
+              <div className="section-tag" style={{ backgroundColor: getSectionColor(selectedArticle.section) }}>
+                {selectedArticle.section}
+              </div>
             </div>
-            <div className="date">
-              {formatDate(selectedArticle.published_date || selectedArticle.pub_date)}
-            </div>
+            
             {selectedArticle.abstract && (
-              <div className="abstract">{selectedArticle.abstract}</div>
+              <p className="article-abstract">{selectedArticle.abstract}</p>
             )}
-            <div className="buttons">
-              <button onClick={handleCloseArticle}>Close</button>
-              <a href={selectedArticle.url} target="_blank" rel="noopener noreferrer">
+            
+            {selectedArticle.byline && (
+              <p className="article-byline">{selectedArticle.byline.original || selectedArticle.byline}</p>
+            )}
+            
+            <div className="article-meta">
+              <span>Published: {new Date(selectedArticle.published_date || selectedArticle.pub_date).toLocaleString()}</span>
+            </div>
+            
+            <div className="article-actions">
+              <a 
+                href={selectedArticle.url || selectedArticle.web_url} 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="read-more-btn"
+              >
                 Read Full Article
               </a>
+              <button onClick={handleCloseArticle} className="close-btn">
+                Close
+              </button>
             </div>
           </ArticleFocusCard>
         </ArticleOverlay>
       )}
       
-      {/* Toggle controls for article filtering */}
+      {/* Section filter controls */}
       <ToggleContainer>
-        <h3>NYT Starfield</h3>
-        
-        <div style={{ display: 'flex', gap: '8px', marginBottom: '12px' }}>
-          <ToggleButton 
-            active={showLatest} 
-            activeColor="rgba(0, 120, 255, 0.4)"
-            onClick={() => setShowLatest(!showLatest)}
-          >
-            {showLatest ? '○ ' : '• '} Latest ({filteredLatestArticles?.length || 0})
-          </ToggleButton>
-          
-          <ToggleButton 
-            active={showPopular} 
-            activeColor="rgba(255, 180, 0, 0.4)"
-            onClick={() => setShowPopular(!showPopular)}
-          >
-            {showPopular ? '○ ' : '• '} Popular ({filteredPopularArticles?.length || 0})
-          </ToggleButton>
+        <div className="toggle-header">
+          <span>NYT News Observatory</span>
+          <span>{articleCount} articles from last 24 hours</span>
         </div>
         
-        <ToggleButton 
-          active={showSectionFilter}
-          activeColor="rgba(255, 255, 255, 0.15)"
-          onClick={() => setShowSectionFilter(!showSectionFilter)}
-          style={{ marginTop: '4px', borderLeft: showSectionFilter ? '2px solid rgba(255, 255, 255, 0.4)' : '2px solid transparent' }}
-        >
-          {showSectionFilter ? '▲ Hide Sections' : '▼ Filter by Section'}
-        </ToggleButton>
+        <div className="toggle-buttons">
+          <SectionFilterButton 
+            onClick={() => setShowSectionFilter(!showSectionFilter)}
+            active={showSectionFilter}
+          >
+            Filter by Section {showSectionFilter ? '▲' : '▼'}
+          </SectionFilterButton>
+        </div>
         
         {showSectionFilter && (
-          <div 
-            style={{ 
-              maxHeight: '300px', 
-              overflowY: 'auto', 
-              marginTop: '8px',
-              display: 'flex',
-              flexDirection: 'column',
-              gap: '2px'
-            }}
-          >
+          <SectionFilterContainer>
             {uniqueSections.map(section => (
               <SectionFilterButton
                 key={section}
-                active={selectedSections.includes(section)}
-                section={section}
                 onClick={() => toggleSection(section)}
+                active={selectedSections.includes(section)}
               >
-                <ColorIndicator color={getSectionColor(section)} />
-                {selectedSections.includes(section) ? '☑ ' : '☐ '} 
-                {section}
+                <ColorIndicator style={{ backgroundColor: getSectionColor(section) }} />
+                {section.charAt(0).toUpperCase() + section.slice(1)}
               </SectionFilterButton>
             ))}
-          </div>
+          </SectionFilterContainer>
         )}
       </ToggleContainer>
       

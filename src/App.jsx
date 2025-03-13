@@ -57,9 +57,7 @@ function App() {
   return (
     <NewsProvider>
       <div className="app-container">
-        <AppHeader>
-          <h1>The New York Times News Starfield</h1>
-        </AppHeader>
+      
         
         <main className="app-content">
           {/* Star field visualization */}

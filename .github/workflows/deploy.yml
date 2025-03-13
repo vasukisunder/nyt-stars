@@ -19,6 +19,7 @@ jobs:
         uses: actions/setup-node@v3
         with:
           node-version: 18
+          cache: 'npm'
 
       - name: Install dependencies
         run: npm ci
@@ -26,8 +27,12 @@ jobs:
       - name: Build
         run: npm run build
         
+      - name: List dist contents for debugging
+        run: ls -la dist/
+
       - name: Deploy to GitHub Pages
         uses: JamesIves/github-pages-deploy-action@v4
         with:
-          branch: gh-pages
-          folder: dist 
+          folder: dist
+          clean: true
+          branch: gh-pages 
