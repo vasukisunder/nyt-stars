@@ -1,50 +1,21 @@
 import { useState } from 'react'
+import { AnimatePresence, motion } from 'framer-motion'
 import { NewsProvider } from './context/NewsContext'
 import StarfieldVisualization from './components/OrbitalVisualization'
 import ArticleDetail from './components/ArticleDetail'
+import IntroScreen from './components/IntroScreen'
 import { useNews } from './hooks/useNews'
-import styled from 'styled-components'
 import './App.css'
 
-const AppHeader = styled.header`
-  position: absolute;
-  top: 20px;
-  left: 20px;
-  z-index: 100;
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-  
-  h1 {
-    font-size: 18px;
-    font-weight: 400;
-    color: rgba(255, 255, 255, 0.9);
-    margin: 0;
-    letter-spacing: 0.03em;
-    background-color: rgba(0, 0, 0, 0.4);
-    padding: 10px 16px;
-    border-radius: 8px;
-    backdrop-filter: blur(8px);
-    border: 1px solid rgba(255, 255, 255, 0.05);
-  }
-`;
-
-// A component to handle article selection
 const ArticleManager = () => {
   const [selectedArticle, setSelectedArticle] = useState(null)
-  const { latestArticles, popularArticles } = useNews()
 
-  // Function to handle article selection
-  const handleArticleSelect = (article) => {
-    setSelectedArticle(article)
-  }
-
-  // Function to close article detail
   const handleCloseDetail = () => {
     setSelectedArticle(null)
   }
 
   return (
     <>
-      {/* Pass the handleArticleSelect function to child components if needed */}
       {selectedArticle && (
         <ArticleDetail article={selectedArticle} onClose={handleCloseDetail} />
       )}
@@ -52,21 +23,30 @@ const ArticleManager = () => {
   )
 }
 
-// Main App component
 function App() {
+  const [hasEntered, setHasEntered] = useState(false)
+
   return (
     <NewsProvider>
-      <div className="app-container">
-      
-        
-        <main className="app-content">
-          {/* Star field visualization */}
-          <StarfieldVisualization />
-          
-          {/* Article manager for handling article selection */}
-          <ArticleManager />
-        </main>
-      </div>
+      <AnimatePresence mode="wait">
+        {!hasEntered && (
+          <IntroScreen key="intro" onEnter={() => setHasEntered(true)} />
+        )}
+      </AnimatePresence>
+
+      {hasEntered && (
+        <motion.div
+          className="app-container"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 1.1, ease: 'easeOut' }}
+        >
+          <main className="app-content">
+            <StarfieldVisualization />
+            <ArticleManager />
+          </main>
+        </motion.div>
+      )}
     </NewsProvider>
   )
 }

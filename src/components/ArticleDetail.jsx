@@ -1,36 +1,36 @@
 import { useEffect } from 'react';
 import styled from 'styled-components';
-import { getSectionColor } from '../utils/articleUtils';
+import { colors, fonts, shadows, surfaces } from '../styles/designTokens';
 
 const DetailContainer = styled.div`
   position: fixed;
-  top: 0;
-  left: 0;
-  width: 100vw;
-  height: 100vh;
-  background-color: rgba(0, 0, 0, 0.8);
+  inset: 0;
+  background-color: ${surfaces.overlay};
   display: flex;
   justify-content: center;
   align-items: center;
   z-index: 1000;
-  backdrop-filter: blur(5px);
+  backdrop-filter: blur(14px);
 `;
 
 const DetailCard = styled.div`
-  background-color: #111;
+  background: rgba(0, 0, 0, 0.55);
   width: 80%;
   max-width: 800px;
   max-height: 80vh;
-  border-radius: 10px;
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+  border-radius: 0;
+  box-shadow: ${shadows.login};
+  border: 1px solid ${surfaces.glassBorder};
   overflow: hidden;
   display: flex;
   flex-direction: column;
+  font-family: ${fonts.body};
 `;
 
 const DetailHeader = styled.div`
-  padding: 20px;
-  background-color: ${props => props.color || '#333'};
+  padding: var(--spacing-20);
+  background: rgba(0, 0, 0, 0.35);
+  border-bottom: 1px solid ${surfaces.glassBorder};
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
@@ -38,117 +38,136 @@ const DetailHeader = styled.div`
 
 const Title = styled.h2`
   margin: 0;
-  color: white;
-  font-size: 24px;
+  font-family: ${fonts.body};
+  color: ${colors.ghostWhite};
+  font-size: var(--text-heading);
+  line-height: var(--leading-heading);
   flex: 1;
 `;
 
 const CloseButton = styled.button`
-  background: none;
-  border: none;
-  color: white;
-  font-size: 24px;
+  background: transparent;
+  border: 1px solid ${surfaces.glassBorder};
+  border-radius: 0;
+  color: ${colors.arcticMist};
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
   cursor: pointer;
-  margin-left: 20px;
-  
+  margin-left: var(--spacing-20);
+  padding: 10px 14px;
+
   &:hover {
-    opacity: 0.8;
+    color: ${colors.comet};
+    border-color: rgba(186, 215, 247, 0.28);
   }
 `;
 
 const DetailBody = styled.div`
-  padding: 20px;
+  padding: var(--card-padding);
   overflow-y: auto;
-  color: white;
+  color: ${colors.comet};
 `;
 
 const MetaData = styled.div`
   display: flex;
   justify-content: space-between;
-  margin-bottom: 20px;
-  font-size: 14px;
-  color: #ccc;
+  align-items: center;
+  margin-bottom: var(--spacing-20);
+  font-size: var(--text-body);
+  color: ${colors.azureGlow};
 `;
 
-const Section = styled.div`
-  padding: 4px 10px;
-  border-radius: 15px;
-  background-color: ${props => props.color || '#333'};
-  color: #000;
-  font-weight: bold;
-  font-size: 12px;
+const SectionBadge = styled.div`
+  padding: 4px var(--spacing-8);
+  border-radius: 0;
+  background: rgba(0, 0, 0, 0.45);
+  color: ${colors.arcticMist};
+  border: 1px solid ${surfaces.glassBorder};
+  font-size: 10px;
+  font-weight: 500;
   text-transform: uppercase;
+  letter-spacing: 0.12em;
 `;
 
-const Date = styled.div``;
+const Date = styled.div`
+  font-family: ${fonts.mono};
+  font-size: var(--text-caption);
+  color: ${colors.interstellarGray};
+  letter-spacing: 0.05em;
+`;
 
 const Abstract = styled.p`
-  font-size: 16px;
-  line-height: 1.6;
-  margin-bottom: 20px;
+  font-size: var(--text-subheading);
+  line-height: var(--leading-subheading);
+  margin-bottom: var(--spacing-20);
+  color: ${colors.comet};
 `;
 
 const ImageContainer = styled.div`
-  margin-bottom: 20px;
-  
+  margin-bottom: var(--spacing-20);
+
   img {
     width: 100%;
-    border-radius: 5px;
+    border-radius: 0;
+    border: 1px solid ${surfaces.glassBorder};
   }
-  
+
   figcaption {
-    font-size: 12px;
-    color: #999;
-    margin-top: 5px;
+    font-size: var(--text-caption);
+    color: ${colors.whisperBlue};
+    margin-top: var(--spacing-8);
   }
 `;
 
 const Keywords = styled.div`
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
-  margin-top: 20px;
+  gap: var(--element-gap);
+  margin-top: var(--spacing-20);
 `;
 
 const Keyword = styled.span`
-  background-color: rgba(255, 255, 255, 0.1);
-  border-radius: 15px;
-  padding: 4px 10px;
-  font-size: 12px;
-  color: #ccc;
+  background: rgba(0, 0, 0, 0.45);
+  border: 1px solid ${surfaces.glassBorder};
+  border-radius: 0;
+  padding: 4px var(--spacing-12);
+  font-size: var(--text-caption);
+  color: ${colors.arcticMist};
 `;
 
 const ReadMoreLink = styled.a`
   display: inline-block;
-  margin-top: 20px;
-  padding: 10px 20px;
-  background-color: #FDB813;
-  color: black;
+  margin-top: var(--spacing-20);
+  padding: 12px 20px;
+  background: rgba(0, 0, 0, 0.45);
+  color: ${colors.arcticMist};
   text-decoration: none;
-  border-radius: 5px;
-  font-weight: bold;
-  
+  border: 1px solid ${surfaces.glassBorder};
+  border-radius: 0;
+  font-weight: 500;
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+
   &:hover {
-    background-color: #FFD700;
+    color: ${colors.comet};
+    border-color: rgba(186, 215, 247, 0.28);
   }
 `;
 
 const ArticleDetail = ({ article, onClose }) => {
-  // Handle escape key press to close
   useEffect(() => {
     const handleKeyDown = (e) => {
-      if (e.key === 'Escape') {
-        onClose();
-      }
+      if (e.key === 'Escape') onClose();
     };
-    
     document.addEventListener('keydown', handleKeyDown);
     return () => document.removeEventListener('keydown', handleKeyDown);
   }, [onClose]);
-  
+
   if (!article) return null;
-  
-  // Format date
+
   const pubDate = new Date(article.published_date || article.pub_date);
   const formattedDate = pubDate.toLocaleDateString('en-US', {
     weekday: 'long',
@@ -156,48 +175,49 @@ const ArticleDetail = ({ article, onClose }) => {
     month: 'long',
     day: 'numeric',
     hour: '2-digit',
-    minute: '2-digit'
+    minute: '2-digit',
   });
-  
-  // Get the section color
-  const sectionColor = getSectionColor(article.section);
-  
-  // Get the multimedia if available
+
   const multimedia = article.multimedia || [];
-  const mainImage = multimedia.find(media => media.format === 'superJumbo') || 
-                  multimedia.find(media => media.format === 'mediumThreeByTwo440') ||
-                  multimedia[0];
-  
+  const mainImage =
+    multimedia.find((media) => media.format === 'superJumbo') ||
+    multimedia.find((media) => media.format === 'mediumThreeByTwo440') ||
+    multimedia[0];
+
   return (
     <DetailContainer onClick={onClose}>
-      <DetailCard onClick={e => e.stopPropagation()}>
-        <DetailHeader color={sectionColor}>
+      <DetailCard onClick={(e) => e.stopPropagation()}>
+        <DetailHeader>
           <Title>{article.title}</Title>
-          <CloseButton onClick={onClose}>×</CloseButton>
+          <CloseButton onClick={onClose} aria-label="Close">
+            Close
+          </CloseButton>
         </DetailHeader>
-        
+
         <DetailBody>
           <MetaData>
-            <Section color={sectionColor}>
-              {article.section || 'News'}
-            </Section>
+            <SectionBadge>{article.section || 'News'}</SectionBadge>
             <Date>{formattedDate}</Date>
           </MetaData>
-          
+
           {mainImage && (
             <ImageContainer>
-              <img 
-                src={mainImage.url.startsWith('http') ? mainImage.url : `https://static01.nyt.com/${mainImage.url}`} 
-                alt={article.title} 
+              <img
+                src={
+                  mainImage.url.startsWith('http')
+                    ? mainImage.url
+                    : `https://static01.nyt.com/${mainImage.url}`
+                }
+                alt={article.title}
               />
               <figcaption>{mainImage.caption}</figcaption>
             </ImageContainer>
           )}
-          
+
           <Abstract>{article.abstract}</Abstract>
-          
-          {article.byline && <p>{article.byline}</p>}
-          
+
+          {article.byline && <p style={{ color: colors.azureGlow }}>{article.byline}</p>}
+
           {article.des_facet && article.des_facet.length > 0 && (
             <Keywords>
               {article.des_facet.slice(0, 10).map((keyword, index) => (
@@ -205,9 +225,9 @@ const ArticleDetail = ({ article, onClose }) => {
               ))}
             </Keywords>
           )}
-          
+
           <ReadMoreLink href={article.url} target="_blank" rel="noopener noreferrer">
-            Read Full Article
+            Read full article
           </ReadMoreLink>
         </DetailBody>
       </DetailCard>
@@ -215,4 +235,4 @@ const ArticleDetail = ({ article, onClose }) => {
   );
 };
 
-export default ArticleDetail; 
+export default ArticleDetail;

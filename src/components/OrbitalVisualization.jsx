@@ -1,28 +1,236 @@
 import { useState, useRef, useEffect, useMemo, useCallback } from 'react';
-import { Canvas, useFrame, useThree } from '@react-three/fiber';
-import { OrbitControls, Text, Billboard, Html } from '@react-three/drei';
+import { Canvas, useFrame } from '@react-three/fiber';
+import { OrbitControls } from '@react-three/drei';
 import { useNews } from '../hooks/useNews';
-import { getSectionColor, sectionColors } from '../utils/articleUtils';
+import { getSectionColor } from '../utils/articleUtils';
+import {
+  AuroraRibbons,
+  ConstellationWeb,
+  CosmicDust,
+} from './AtmosphereLayers';
+import {
+  DeepNebulaField,
+  DistantGalaxies,
+  LightPillars,
+  OrbitalRings,
+  StarClusters,
+} from './SceneAmbience';
+import { colors, fonts, radius, shadows, surfaces, starSpectralPalette } from '../styles/designTokens';
 import * as THREE from 'three';
 import styled from 'styled-components';
 
-// Neo-modernist styled components
+const SceneVignette = styled.div`
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 50;
+  background:
+    radial-gradient(ellipse at center, transparent 38%, rgba(5, 6, 15, 0.65) 100%),
+    linear-gradient(180deg, rgba(5, 6, 15, 0.4) 0%, transparent 20%, transparent 80%, rgba(5, 6, 15, 0.45) 100%);
+`;
+
+const HorizonGlow = styled.div`
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 35%;
+  pointer-events: none;
+  z-index: 49;
+  background: linear-gradient(to top, rgba(152, 192, 239, 0.08), transparent);
+`;
+
+const STAR_SHAPE_VARIANTS = ['sparkle', 'cross', 'diamond', 'pinpoint', 'burst'];
+
+const spectralPalette = starSpectralPalette;
+
+const hashString = (value = '') => {
+  let hash = 0;
+  for (let i = 0; i < value.length; i += 1) {
+    hash = (hash << 5) - hash + value.charCodeAt(i);
+    hash |= 0;
+  }
+  return Math.abs(hash);
+};
+
+const pickFromPalette = (seed, palette = spectralPalette) => palette[seed % palette.length];
+
+const getDistinctStarColor = (sectionColor, seed = 0) => {
+  const accent = new THREE.Color(pickFromPalette(seed, spectralPalette));
+  const base = new THREE.Color(sectionColor);
+  const mixed = base.clone().lerp(accent, 0.28);
+  mixed.offsetHSL(((seed % 11) - 5) * 0.018, 0.22, ((seed % 7) - 3) * 0.035);
+  return mixed;
+};
+
+const createStarTexture = (variant = 'sparkle') => {
+  if (typeof document === 'undefined') return null;
+
+  const size = 256;
+  const canvas = document.createElement('canvas');
+  canvas.width = size;
+  canvas.height = size;
+
+  const ctx = canvas.getContext('2d');
+  if (!ctx) return null;
+
+  const center = size / 2;
+
+  const drawSpike = (angle, length, width, opacity) => {
+    ctx.save();
+    ctx.translate(center, center);
+    ctx.rotate(angle);
+    const spikeGradient = ctx.createLinearGradient(0, 0, 0, -length);
+    spikeGradient.addColorStop(0, `rgba(210, 228, 255, ${opacity})`);
+    spikeGradient.addColorStop(0.7, `rgba(150, 188, 255, ${opacity * 0.5})`);
+    spikeGradient.addColorStop(1, 'rgba(150, 188, 255, 0)');
+    ctx.fillStyle = spikeGradient;
+    ctx.beginPath();
+    ctx.moveTo(-width / 2, 0);
+    ctx.lineTo(0, -length);
+    ctx.lineTo(width / 2, 0);
+    ctx.closePath();
+    ctx.fill();
+    ctx.restore();
+  };
+
+  const drawCore = (radius = 12) => {
+    const coreGlow = ctx.createRadialGradient(center, center, 0, center, center, radius);
+    coreGlow.addColorStop(0, 'rgba(220, 236, 255, 0.95)');
+    coreGlow.addColorStop(0.45, 'rgba(170, 205, 255, 0.55)');
+    coreGlow.addColorStop(1, 'rgba(170, 205, 255, 0)');
+    ctx.fillStyle = coreGlow;
+    ctx.beginPath();
+    ctx.arc(center, center, radius, 0, Math.PI * 2);
+    ctx.fill();
+  };
+
+  if (variant === 'cross') {
+    drawSpike(0, 128, 9, 1);
+    drawSpike(Math.PI / 2, 128, 9, 1);
+    drawSpike(Math.PI, 128, 9, 1);
+    drawSpike((3 * Math.PI) / 2, 128, 9, 1);
+    drawCore(10);
+  } else if (variant === 'diamond') {
+    drawSpike(Math.PI / 4, 96, 8, 0.95);
+    drawSpike((3 * Math.PI) / 4, 96, 8, 0.95);
+    drawSpike((5 * Math.PI) / 4, 96, 8, 0.95);
+    drawSpike((7 * Math.PI) / 4, 96, 8, 0.95);
+    drawCore(14);
+  } else if (variant === 'pinpoint') {
+    drawSpike(0, 52, 5, 0.85);
+    drawSpike(Math.PI / 2, 52, 5, 0.85);
+    drawSpike(Math.PI, 52, 5, 0.85);
+    drawSpike((3 * Math.PI) / 2, 52, 5, 0.85);
+    drawCore(8);
+  } else if (variant === 'burst') {
+    for (let i = 0; i < 12; i += 1) {
+      const angle = (i * Math.PI) / 6;
+      const length = i % 2 === 0 ? 88 : 58;
+      const width = i % 2 === 0 ? 7 : 5;
+      drawSpike(angle, length, width, i % 2 === 0 ? 0.9 : 0.65);
+    }
+    drawCore(11);
+  } else {
+    drawSpike(0, 118, 10, 0.98);
+    drawSpike(Math.PI / 2, 118, 10, 0.98);
+    drawSpike(Math.PI, 118, 10, 0.98);
+    drawSpike((3 * Math.PI) / 2, 118, 10, 0.98);
+    drawSpike(Math.PI / 4, 74, 8, 0.82);
+    drawSpike((3 * Math.PI) / 4, 74, 8, 0.82);
+    drawSpike((5 * Math.PI) / 4, 74, 8, 0.82);
+    drawSpike((7 * Math.PI) / 4, 74, 8, 0.82);
+    drawCore(14);
+  }
+
+  const texture = new THREE.CanvasTexture(canvas);
+  texture.minFilter = THREE.LinearFilter;
+  texture.magFilter = THREE.LinearFilter;
+  texture.needsUpdate = true;
+  return texture;
+};
+
+const createCometTexture = () => {
+  if (typeof document === 'undefined') return null;
+
+  const width = 512;
+  const height = 64;
+  const canvas = document.createElement('canvas');
+  canvas.width = width;
+  canvas.height = height;
+  const ctx = canvas.getContext('2d');
+  if (!ctx) return null;
+
+  const gradient = ctx.createLinearGradient(0, height / 2, width, height / 2);
+  gradient.addColorStop(0, 'rgba(180, 210, 255, 0)');
+  gradient.addColorStop(0.35, 'rgba(200, 225, 255, 0.35)');
+  gradient.addColorStop(0.75, 'rgba(230, 242, 255, 0.85)');
+  gradient.addColorStop(1, 'rgba(255, 255, 255, 1)');
+  ctx.fillStyle = gradient;
+  ctx.fillRect(0, height / 2 - 2, width, 4);
+
+  const texture = new THREE.CanvasTexture(canvas);
+  texture.minFilter = THREE.LinearFilter;
+  texture.magFilter = THREE.LinearFilter;
+  texture.needsUpdate = true;
+  return texture;
+};
+
+const useStarTextures = () => useMemo(() => {
+  const textures = {};
+  STAR_SHAPE_VARIANTS.forEach((variant) => {
+    textures[variant] = createStarTexture(variant);
+  });
+  textures.comet = createCometTexture();
+  return textures;
+}, []);
+
+const R = '0';
+
+const panel = `
+  background: rgba(0, 0, 0, 0.5);
+  border: 1px solid ${surfaces.glassBorder};
+  border-radius: ${R};
+  backdrop-filter: blur(10px);
+`;
+
+const editorialBtn = `
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 120px;
+  padding: 11px 18px;
+  font-family: ${fonts.body};
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  text-decoration: none;
+  color: ${colors.arcticMist};
+  background: rgba(0, 0, 0, 0.45);
+  border: 1px solid ${surfaces.glassBorder};
+  border-radius: ${R};
+  cursor: pointer;
+  transition: color 0.15s ease, border-color 0.15s ease;
+
+  &:hover {
+    color: ${colors.comet};
+    border-color: rgba(186, 215, 247, 0.28);
+  }
+`;
+
 const ErrorContainer = styled.div`
   position: absolute;
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  background-color: rgba(10, 10, 15, 0.85);
-  color: #ff4444;
-  padding: 20px 24px;
-  border-radius: 4px;
+  ${panel}
+  color: ${colors.comet};
+  padding: 24px;
   max-width: 80%;
   text-align: center;
   z-index: 100;
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-  font-weight: 300;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
-  border: 1px solid rgba(255, 70, 70, 0.2);
+  font-family: ${fonts.body};
 `;
 
 const LoadingContainer = styled.div`
@@ -30,347 +238,315 @@ const LoadingContainer = styled.div`
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  background-color: rgba(10, 10, 15, 0.85);
-  color: white;
-  padding: 20px 24px;
-  border-radius: 4px;
+  ${panel}
+  color: ${colors.comet};
+  padding: 24px;
   max-width: 80%;
   text-align: center;
   z-index: 100;
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-  font-weight: 300;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  font-family: ${fonts.body};
 `;
 
-const InfoText = styled.div`
-  position: absolute;
-  bottom: 30px;
-  left: 50%;
-  transform: translateX(-50%);
-  background-color: rgba(10, 10, 15, 0.75);
-  color: rgba(255, 255, 255, 0.9);
-  padding: 10px 20px;
-  border-radius: 2px;
-  z-index: 100;
-  font-size: 14px;
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-  font-weight: 300;
-  letter-spacing: 0.03em;
-  backdrop-filter: blur(8px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
-  border-left: 2px solid rgba(255, 255, 255, 0.3);
-`;
-
-// Toggle controls for article filtering - neo modernist style
-const ToggleContainer = styled.div`
+/* Top HUD: title + horizontal section filters */
+const HudBar = styled.header`
   position: absolute;
   top: 20px;
+  left: 20px;
   right: 20px;
-  background-color: rgba(10, 10, 15, 0.8);
-  backdrop-filter: blur(10px);
-  padding: 16px;
   z-index: 100;
-  min-width: 200px;
-  max-width: 320px;
-  border-radius: 2px;
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-  border-left: 2px solid rgba(255, 255, 255, 0.2);
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
-  
-  .toggle-header {
-    display: flex;
-    flex-direction: column;
-    margin-bottom: 16px;
-    
-    span:first-child {
-      font-size: 16px;
-      font-weight: 500;
-      margin-bottom: 4px;
-      color: white;
-    }
-    
-    span:last-child {
-      font-size: 13px;
-      color: rgba(255, 255, 255, 0.7);
-    }
-  }
-  
-  .toggle-buttons {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-  }
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  pointer-events: none;
+  font-family: ${fonts.body};
 `;
 
-const ToggleButton = styled.button`
-  background-color: ${props => props.active ? props.activeColor : 'rgba(10, 10, 15, 0.6)'};
-  color: white;
-  border: none;
-  padding: 10px 14px;
-  border-radius: 2px;
-  cursor: pointer;
-  font-weight: ${props => props.active ? '400' : '300'};
+const HudBrand = styled.div`
+  ${panel}
+  flex-shrink: 0;
+  padding: 14px 18px;
+  pointer-events: auto;
+`;
+
+const HudTitle = styled.h1`
+  margin: 0 0 4px;
   font-size: 14px;
-  transition: all 0.2s ease;
-  letter-spacing: 0.03em;
-  border-left: ${props => props.active ? '2px solid rgba(255, 255, 255, 0.8)' : '2px solid transparent'};
-  
-  &:hover {
-    background-color: ${props => props.active ? props.activeColor : 'rgba(255, 255, 255, 0.1)'};
-    transform: translateX(2px);
-  }
+  font-weight: 500;
+  letter-spacing: -0.02em;
+  color: ${colors.ghostWhite};
 `;
 
-// Article overlay
-const ArticleOverlay = styled.div`
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background-color: rgba(5, 5, 16, 0.85);
-  backdrop-filter: blur(8px);
+const HudMeta = styled.p`
+  margin: 0;
+  font-family: ${fonts.mono};
+  font-size: 11px;
+  color: ${colors.interstellarGray};
+`;
+
+const SectionFilterRow = styled.div`
+  ${panel}
+  flex: 1;
+  min-width: 0;
   display: flex;
   align-items: center;
-  justify-content: center;
-  z-index: 1000;
-  padding: 20px;
-`;
+  gap: 4px;
+  padding: 10px 12px;
+  overflow-x: auto;
+  pointer-events: auto;
 
-// Article focus card
-const ArticleFocusCard = styled.div`
-  background-color: #0a0a1a;
-  color: white;
-  border-radius: 2px;
-  padding: 24px;
-  width: 100%;
-  max-width: 800px;
-  max-height: 90vh;
-  overflow-y: auto;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
-  border-left: 2px solid rgba(255, 255, 255, 0.3);
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-  
-  .article-header {
-    margin-bottom: 20px;
-    
-    h2 {
-      font-size: 24px;
-      margin: 0 0 12px 0;
-      line-height: 1.3;
-      font-weight: 500;
-    }
-    
-    .section-tag {
-      display: inline-block;
-      padding: 4px 10px;
-      border-radius: 2px;
-      font-size: 12px;
-      font-weight: 500;
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
-    }
+  &::-webkit-scrollbar {
+    height: 3px;
   }
-  
-  .article-abstract {
-    font-size: 18px;
-    line-height: 1.6;
-    margin-bottom: 20px;
-    color: rgba(255, 255, 255, 0.9);
-  }
-  
-  .article-byline {
-    font-size: 14px;
-    margin-bottom: 20px;
-    color: rgba(255, 255, 255, 0.7);
-  }
-  
-  .article-meta {
-    font-size: 14px;
-    color: rgba(255, 255, 255, 0.6);
-    margin-bottom: 24px;
-  }
-  
-  .article-actions {
-    display: flex;
-    gap: 12px;
-    
-    .read-more-btn {
-      background-color: rgba(0, 120, 255, 0.8);
-      color: white;
-      text-decoration: none;
-      padding: 10px 16px;
-      border-radius: 2px;
-      font-size: 14px;
-      border: none;
-      cursor: pointer;
-      
-      &:hover {
-        background-color: rgba(0, 120, 255, 1);
-      }
-    }
-    
-    .close-btn {
-      background-color: rgba(255, 255, 255, 0.1);
-      color: white;
-      padding: 10px 16px;
-      border-radius: 2px;
-      font-size: 14px;
-      border: none;
-      cursor: pointer;
-      
-      &:hover {
-        background-color: rgba(255, 255, 255, 0.2);
-      }
-    }
+
+  &::-webkit-scrollbar-thumb {
+    background: ${surfaces.glassBorder};
   }
 `;
 
-// Title hover label for stars - increased text size
-const StarHoverLabel = styled.div`
-  background-color: rgba(10, 10, 15, 0.85);
-  color: white;
-  padding: 10px 14px;
-  border-radius: 2px;
-  font-size: 16px;
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-  backdrop-filter: blur(4px);
-  white-space: nowrap;
-  max-width: 320px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  pointer-events: none;
-  border-left: 3px solid;
-  transform: translateY(-4px);
-  opacity: 0;
-  animation: fadeUp 0.2s forwards;
-  letter-spacing: 0.01em;
-  font-weight: 400;
-  
-  @keyframes fadeUp {
-    to { 
-      opacity: 1;
-      transform: translateY(0);
-    }
-  }
-`;
-
-// Notification for new articles
-const UpdateNotification = styled.div`
-  position: absolute;
-  top: 80px;
-  right: 20px;
-  background-color: rgba(0, 120, 255, 0.8);
-  color: white;
-  padding: 10px 16px;
-  border-radius: 2px;
-  z-index: 101;
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-  font-size: 14px;
-  font-weight: 400;
-  letter-spacing: 0.03em;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
-  border-left: 2px solid rgba(255, 255, 255, 0.8);
-  transform: translateX(120%);
-  opacity: 0;
-  transition: transform 0.3s ease, opacity 0.3s ease;
-  
-  &.visible {
-    transform: translateX(0);
-    opacity: 1;
-  }
-`;
-
-// Modify the SectionFilterButton to make the color indicator more prominent
 const SectionFilterButton = styled.button`
-  display: flex;
+  display: inline-flex;
   align-items: center;
   gap: 8px;
-  background-color: ${props => props.active ? 'rgba(255, 255, 255, 0.1)' : 'rgba(10, 10, 15, 0.6)'};
-  color: white;
-  border: none;
-  padding: 8px 12px;
-  margin: 4px 0;
-  border-radius: 0;
+  flex-shrink: 0;
+  padding: 6px 12px;
+  background: ${(props) => (props.$active ? 'rgba(186, 215, 247, 0.1)' : 'transparent')};
+  border: 1px solid ${(props) => (props.$active ? 'rgba(186, 215, 247, 0.22)' : 'transparent')};
+  border-radius: ${R};
   cursor: pointer;
-  font-weight: ${props => props.active ? '400' : '300'};
-  font-size: 13px;
-  transition: all 0.2s ease;
-  letter-spacing: 0.02em;
-  border-left: ${props => props.active ? '2px solid rgba(255, 255, 255, 0.6)' : '2px solid transparent'};
-  text-align: left;
-  width: 100%;
+  font-size: 12px;
+  font-family: ${fonts.body};
+  letter-spacing: -0.01em;
   text-transform: capitalize;
-  
+  color: ${(props) => (props.$active ? colors.comet : colors.azureGlow)};
+
   &:hover {
-    background-color: rgba(255, 255, 255, 0.1);
-    transform: translateX(2px);
+    color: ${colors.comet};
+    border-color: rgba(186, 215, 247, 0.14);
   }
 `;
 
-// Add a color indicator component for the buttons
-const ColorIndicator = styled.div`
-  width: 12px;
-  height: 12px;
-  border-radius: 2px;
+const ColorIndicator = styled.span`
+  width: 5px;
+  height: 5px;
+  flex-shrink: 0;
+  background: ${(props) => props.$color || colors.whisperBlue};
+  border-radius: ${R};
+`;
+
+/* Bottom hover caption */
+const HoverCaption = styled.div`
+  position: absolute;
+  left: 50%;
+  bottom: 28px;
+  transform: translateX(-50%) translateY(${(props) => (props.$visible ? 0 : 10)}px);
+  z-index: 100;
+  width: min(640px, calc(100% - 40px));
+  ${panel}
+  padding: 14px 20px;
+  font-family: ${fonts.body};
+  pointer-events: none;
+  text-align: center;
+  opacity: ${(props) => (props.$visible ? 1 : 0)};
+  transition: opacity 0.2s ease, transform 0.2s ease;
+`;
+
+const HoverSection = styled.span`
+  display: block;
+  font-size: 11px;
+  color: ${colors.whisperBlue};
+  margin-bottom: 6px;
+  letter-spacing: -0.01em;
+`;
+
+const HoverTitle = styled.p`
+  margin: 0;
+  font-size: 15px;
+  font-weight: 500;
+  line-height: 1.45;
+  color: ${colors.comet};
+  letter-spacing: -0.02em;
+`;
+
+/* Centered article card */
+const ArticleOverlay = styled.div`
+  position: fixed;
+  inset: 0;
+  background: rgba(5, 6, 15, 0.6);
+  z-index: 1000;
+  pointer-events: auto;
+`;
+
+const ArticleCard = styled.article`
+  position: fixed;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 1001;
+  width: min(520px, calc(100vw - 40px));
+  max-height: min(72vh, 640px);
+  ${panel}
+  display: flex;
+  flex-direction: column;
+  font-family: ${fonts.body};
+  pointer-events: auto;
+`;
+
+const CardHeader = styled.header`
+  padding: 20px 22px 14px;
+  border-bottom: 1px solid ${surfaces.glassBorder};
   flex-shrink: 0;
 `;
 
-// Container for section filters
-const SectionFilterContainer = styled.div`
-  max-height: 300px;
-  overflow-y: auto;
-  margin-top: 8px;
+const CardClose = styled.button`
+  position: absolute;
+  top: 14px;
+  right: 16px;
+  background: none;
+  border: none;
+  color: ${colors.whisperBlue};
+  font-size: 12px;
+  font-family: ${fonts.body};
+  letter-spacing: -0.01em;
+  cursor: pointer;
+  padding: 4px 8px;
+
+  &:hover {
+    color: ${colors.comet};
+  }
+`;
+
+const CardMeta = styled.div`
   display: flex;
-  flex-direction: column;
-  gap: 2px;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 12px;
+  margin-bottom: 10px;
+  padding-right: 48px;
+`;
+
+const CardSection = styled.span`
+  font-size: 11px;
+  color: ${colors.whisperBlue};
+  letter-spacing: -0.01em;
+`;
+
+const CardDate = styled.span`
+  font-family: ${fonts.mono};
+  font-size: 11px;
+  color: ${colors.interstellarGray};
+`;
+
+const CardTitle = styled.h2`
+  margin: 0;
+  font-size: 20px;
+  font-weight: 500;
+  line-height: 1.35;
+  color: ${colors.ghostWhite};
+  letter-spacing: -0.02em;
+`;
+
+const CardBody = styled.div`
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 18px 22px;
+`;
+
+const CardAbstract = styled.p`
+  margin: 0 0 16px;
+  font-size: 14px;
+  line-height: 1.65;
+  color: ${colors.comet};
+  letter-spacing: -0.01em;
+`;
+
+const CardByline = styled.p`
+  margin: 0;
+  font-size: 13px;
+  color: ${colors.azureGlow};
+`;
+
+const CardActions = styled.footer`
+  display: flex;
+  gap: 10px;
+  padding: 14px 22px 20px;
+  border-top: 1px solid ${surfaces.glassBorder};
+  flex-shrink: 0;
+
+  a, button {
+    flex: 1;
+    ${editorialBtn}
+    min-width: 0;
+    text-transform: none;
+    letter-spacing: -0.01em;
+    font-size: 13px;
+  }
+`;
+
+const Toast = styled.div`
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  z-index: 101;
+  ${panel}
+  padding: 10px 14px;
+  font-size: 12px;
+  letter-spacing: -0.01em;
+  color: ${colors.arcticMist};
+  opacity: ${(props) => (props.$visible ? 1 : 0)};
+  transform: translateY(${(props) => (props.$visible ? 0 : -6)}px);
+  transition: opacity 0.25s ease, transform 0.25s ease;
+  pointer-events: none;
 `;
 
 // Background Star component (non-interactive)
-const BackgroundStar = ({ position, size }) => {
-  const meshRef = useRef();
+const BackgroundStar = ({ position, size, color, phase, shape, starTextures }) => {
+  const spriteRef = useRef();
+  const texture = starTextures[shape] || starTextures.sparkle;
   
   useFrame(({ clock }) => {
-    if (meshRef.current) {
+    if (spriteRef.current) {
       const time = clock.getElapsedTime();
-      // Subtle twinkling effect
-      const pulse = 0.6 + Math.sin(time * 0.2 + position[0] * position[1]) * 0.1;
-      meshRef.current.material.opacity = pulse;
+      const pulse = 0.32 + Math.sin(time * 0.35 + phase) * 0.16;
+      const scalePulse = 1 + Math.sin(time * 0.55 + phase) * 0.1;
+      const scaleBase = shape === 'pinpoint' ? 3.2 : shape === 'burst' ? 4.8 : 4;
+      spriteRef.current.material.opacity = pulse;
+      spriteRef.current.scale.set(size * scaleBase * scalePulse, size * scaleBase * scalePulse, 1);
     }
   });
   
   return (
-    <mesh position={position} scale={[size, size, size]} ref={meshRef}>
-      <sphereGeometry args={[1, 8, 8]} />
-      <meshBasicMaterial 
-        color="#ffffff" 
-        transparent 
-        opacity={0.5}
+    <sprite position={position} scale={[size * 4, size * 4, 1]} ref={spriteRef}>
+      <spriteMaterial
+        map={texture}
+        color={color}
+        transparent
+        opacity={0.42}
+        blending={THREE.AdditiveBlending}
+        depthWrite={false}
       />
-    </mesh>
+    </sprite>
   );
 };
 
 // Generate static background stars
-const BackgroundStars = ({ count = 300 }) => {
-  // Create star positions once
+const BackgroundStars = ({ count = 500, starTextures }) => {
   const stars = useMemo(() => {
     const tempStars = [];
     for (let i = 0; i < count; i++) {
-      // Position farther away from the center than article stars
       const position = [
-        (Math.random() - 0.5) * 300,
-        (Math.random() - 0.5) * 300,
-        (Math.random() - 0.5) * 300 - 50
+        (Math.random() - 0.5) * 320,
+        (Math.random() - 0.5) * 320,
+        (Math.random() - 0.5) * 320 - 60
       ];
-      
-      // Smaller size for background stars
-      const size = Math.random() * 0.2 + 0.1;
-      
+      const size = Math.random() * 0.14 + 0.05;
+      const seed = i * 17 + Math.floor(position[0] * 100);
       tempStars.push({
         position,
-        size
+        size,
+        color: pickFromPalette(seed, spectralPalette),
+        phase: Math.random() * Math.PI * 2,
+        shape: STAR_SHAPE_VARIANTS[seed % STAR_SHAPE_VARIANTS.length],
       });
     }
     return tempStars;
@@ -383,6 +559,150 @@ const BackgroundStars = ({ count = 300 }) => {
           key={`bg-star-${i}`}
           position={star.position}
           size={star.size}
+          color={star.color}
+          phase={star.phase}
+          shape={star.shape}
+          starTextures={starTextures}
+        />
+      ))}
+    </group>
+  );
+};
+
+const NebulaMist = ({ starTextures }) => {
+  const groupRef = useRef();
+  const wisps = useMemo(() => {
+    return Array.from({ length: 10 }, (_, i) => ({
+      position: [
+        (Math.random() - 0.5) * 220,
+        (Math.random() - 0.5) * 120,
+        -120 - i * 18,
+      ],
+      scale: 55 + Math.random() * 40,
+      color: pickFromPalette(i + 3, spectralPalette),
+      phase: Math.random() * Math.PI * 2,
+      drift: 0.08 + Math.random() * 0.12,
+    }));
+  }, []);
+
+  useFrame(({ clock }) => {
+    if (!groupRef.current) return;
+    const t = clock.getElapsedTime();
+    groupRef.current.children.forEach((child, i) => {
+      const wisp = wisps[i];
+      child.position.x = wisp.position[0] + Math.sin(t * wisp.drift + wisp.phase) * 8;
+      child.position.y = wisp.position[1] + Math.cos(t * wisp.drift * 0.8 + wisp.phase) * 5;
+      child.material.opacity = 0.04 + Math.sin(t * 0.2 + wisp.phase) * 0.015;
+    });
+  });
+
+  return (
+    <group ref={groupRef}>
+      {wisps.map((wisp, i) => (
+        <sprite key={`nebula-${i}`} position={wisp.position} scale={[wisp.scale, wisp.scale * 0.55, 1]}>
+          <spriteMaterial
+            map={starTextures.sparkle}
+            color={wisp.color}
+            transparent
+            opacity={0.05}
+            blending={THREE.AdditiveBlending}
+            depthWrite={false}
+          />
+        </sprite>
+      ))}
+    </group>
+  );
+};
+
+const Meteor = ({ cometTexture, config, onComplete }) => {
+  const spriteRef = useRef();
+  const state = useRef({
+    position: new THREE.Vector3(...config.position),
+    velocity: new THREE.Vector3(...config.velocity),
+    life: 0,
+    maxLife: config.maxLife,
+    color: config.color,
+    scale: config.scale,
+  });
+
+  useFrame((_, delta) => {
+    const meteor = state.current;
+    meteor.life += delta;
+    meteor.position.addScaledVector(meteor.velocity, delta);
+
+    const fade = 1 - meteor.life / meteor.maxLife;
+    if (fade <= 0) {
+      onComplete(config.id);
+      return;
+    }
+
+    if (spriteRef.current) {
+      spriteRef.current.position.copy(meteor.position);
+      spriteRef.current.material.opacity = fade * 0.9;
+      spriteRef.current.material.color.set(meteor.color);
+      const tail = meteor.scale * (0.7 + fade * 0.5);
+      spriteRef.current.scale.set(tail * 3, tail * 0.32, 1);
+      spriteRef.current.material.rotation = Math.atan2(meteor.velocity.y, meteor.velocity.x);
+    }
+  });
+
+  return (
+    <sprite ref={spriteRef} position={config.position}>
+      <spriteMaterial
+        map={cometTexture}
+        color={config.color}
+        transparent
+        opacity={0.9}
+        blending={THREE.AdditiveBlending}
+        depthWrite={false}
+      />
+    </sprite>
+  );
+};
+
+const ShootingStars = ({ starTextures }) => {
+  const [meteors, setMeteors] = useState([]);
+  const spawnTimer = useRef(0);
+  const nextSpawn = useRef(2.5 + Math.random() * 3);
+
+  const removeMeteor = useCallback((id) => {
+    setMeteors((prev) => prev.filter((m) => m.id !== id));
+  }, []);
+
+  useFrame((_, delta) => {
+    spawnTimer.current += delta;
+    if (spawnTimer.current < nextSpawn.current) return;
+
+    spawnTimer.current = 0;
+    nextSpawn.current = 0.9 + Math.random() * 2.2;
+
+    const angle = -0.6 - Math.random() * 0.8;
+    const speed = 70 + Math.random() * 50;
+    setMeteors((prev) => [
+      ...prev.slice(-5),
+      {
+        id: `${Date.now()}-${Math.random()}`,
+        position: [
+          -90 - Math.random() * 80,
+          35 + Math.random() * 70,
+          -30 - Math.random() * 90,
+        ],
+        velocity: [Math.cos(angle) * speed, Math.sin(angle) * speed, 0],
+        maxLife: 0.9 + Math.random() * 0.8,
+        color: pickFromPalette(Math.floor(Math.random() * spectralPalette.length), spectralPalette),
+        scale: 7 + Math.random() * 8,
+      },
+    ]);
+  });
+
+  return (
+    <group>
+      {meteors.map((meteor) => (
+        <Meteor
+          key={meteor.id}
+          config={meteor}
+          cometTexture={starTextures.comet}
+          onComplete={removeMeteor}
         />
       ))}
     </group>
@@ -390,12 +710,29 @@ const BackgroundStars = ({ count = 300 }) => {
 };
 
 // Article Star component (interactive)
-const ArticleStar = ({ article, index, onSelectArticle, isNew }) => {
-  const meshRef = useRef();
+const ArticleStar = ({ article, index, onSelectArticle, onHoverArticle, isNew, starTextures }) => {
+  const articleSeed = useMemo(
+    () => hashString(article.uri || article.url || article.id || article.title || `${index}`),
+    [article, index]
+  );
+  const shape = STAR_SHAPE_VARIANTS[articleSeed % STAR_SHAPE_VARIANTS.length];
+  const starTexture = starTextures[shape] || starTextures.sparkle;
+
+  const starRef = useRef();
+  const accentRef = useRef();
   const glowRef = useRef();
   const [hovered, setHovered] = useState(false);
   const sectionColor = getSectionColor(article.section);
   const animationProgress = useRef(0);
+  const sizeRef = useRef(0.22 + (articleSeed % 100) / 500);
+  const twinkleOffset = useRef((articleSeed % 360) * (Math.PI / 180));
+  const starColor = useMemo(
+    () => getDistinctStarColor(sectionColor, articleSeed),
+    [sectionColor, articleSeed]
+  );
+  const haloColor = useMemo(() => {
+    return starColor.clone().lerp(new THREE.Color(colors.celestialLight), 0.3);
+  }, [starColor]);
   
   // Position - stored in a ref to avoid recalculation
   const positionRef = useRef();
@@ -411,65 +748,42 @@ const ArticleStar = ({ article, index, onSelectArticle, isNew }) => {
   }, []);
   
   // Size - make the stars more visible
-  const size = 0.7;
+  const size = sizeRef.current;
   // Larger invisible hitbox for better clickability
   const hitboxSize = 3;
   
   // Simple twinkling effect
   useFrame(({ clock }) => {
-    if (meshRef.current) {
-      const time = clock.getElapsedTime();
-      // Enhanced pulsing
-      const pulse = 1.2 + Math.sin(time * 0.5 + index * 2) * 0.3;
-      meshRef.current.material.emissiveIntensity = pulse;
-      
-      // Special animation for new stars
-      if (isNew) {
-        // Increment animation progress
-        animationProgress.current = Math.min(animationProgress.current + 0.005, 1);
-        
-        // Add a highlight effect that fades over time (for new stars)
-        if (animationProgress.current < 1) {
-          const highlightFactor = 1 - animationProgress.current;
-          meshRef.current.material.emissiveIntensity = pulse + highlightFactor * 2;
-          
-          if (glowRef.current) {
-            const extraGlow = highlightFactor * 3;
-            glowRef.current.scale.set(
-              size * (2 + extraGlow),
-              size * (2 + extraGlow),
-              size * (2 + extraGlow)
-            );
-            glowRef.current.material.opacity = 0.5 * (1 - animationProgress.current) + 0.3;
-          }
-        }
+    if (!starRef.current) return;
+
+    const time = clock.getElapsedTime();
+    const pulse = 0.78 + Math.sin(time * 1.2 + twinkleOffset.current) * 0.18;
+    const scaleBase = shape === 'pinpoint' ? 4.1 : shape === 'cross' ? 5.2 : 4.7;
+    const starScale = size * (hovered ? scaleBase + 0.8 : scaleBase) * (1 + Math.sin(time * 1.15 + twinkleOffset.current) * 0.06);
+
+    starRef.current.material.opacity = pulse + (hovered ? 0.18 : 0);
+    starRef.current.scale.set(starScale, starScale, 1);
+
+    if (accentRef.current) {
+      accentRef.current.material.opacity = pulse * 0.55 + (hovered ? 0.15 : 0);
+      accentRef.current.scale.set(starScale * 1.08, starScale * 1.08, 1);
+      accentRef.current.material.rotation = shape === 'diamond' ? Math.PI * 0.25 : Math.PI * 0.12;
+    }
+
+    if (isNew) {
+      animationProgress.current = Math.min(animationProgress.current + 0.005, 1);
+      if (animationProgress.current < 1 && glowRef.current) {
+        const highlightFactor = 1 - animationProgress.current;
+        starRef.current.material.opacity = pulse + highlightFactor * 0.35;
+        const extraGlow = highlightFactor * 2.5;
+        glowRef.current.scale.set(size * (5 + extraGlow), size * (5 + extraGlow), 1);
+        glowRef.current.material.opacity = 0.22 * (1 - animationProgress.current) + 0.1;
       }
-      
-      // Animate the glow effect
-      if (glowRef.current && !isNew) {
-        // Pulse the glow slightly larger than the star
-        const glowPulse = 1.5 + Math.sin(time * 0.5 + index * 2) * 0.5;
-        const hoverBoost = hovered ? 1.5 : 1; // Make glow larger when hovered
-        glowRef.current.scale.set(
-          size * glowPulse * hoverBoost, 
-          size * glowPulse * hoverBoost, 
-          size * glowPulse * hoverBoost
-        );
-        // Fade the glow in and out slightly
-        glowRef.current.material.opacity = (0.3 + Math.sin(time * 0.5 + index * 2) * 0.1) * (hovered ? 1.5 : 1);
-      }
-      
-      // Highlight color when hovered
-      if (meshRef.current.material) {
-        if (hovered) {
-          meshRef.current.material.emissive.set(new THREE.Color(sectionColor).lerp(new THREE.Color(1, 1, 1), 0.5));
-        } else if (isNew && animationProgress.current < 1) {
-          // Brighter color for new stars
-          meshRef.current.material.emissive.set(new THREE.Color(sectionColor).lerp(new THREE.Color(1, 1, 1), 0.3 * (1 - animationProgress.current)));
-        } else {
-          meshRef.current.material.emissive.set(sectionColor);
-        }
-      }
+    } else if (glowRef.current) {
+      const glowPulse = 1.6 + Math.sin(time * 1.1 + twinkleOffset.current) * 0.25;
+      const hoverBoost = hovered ? 1.35 : 1;
+      glowRef.current.scale.set(size * 4.8 * glowPulse * hoverBoost, size * 4.8 * glowPulse * hoverBoost, 1);
+      glowRef.current.material.opacity = (0.12 + Math.sin(time * 1.05 + twinkleOffset.current) * 0.05) * (hovered ? 1.5 : 1);
     }
   });
 
@@ -477,17 +791,18 @@ const ArticleStar = ({ article, index, onSelectArticle, isNew }) => {
   const handlePointerOver = useCallback((e) => {
     e.stopPropagation();
     setHovered(true);
-  }, []);
+    onHoverArticle?.(article);
+  }, [article, onHoverArticle]);
   
   const handlePointerOut = useCallback((e) => {
     e.stopPropagation();
     setHovered(false);
-  }, []);
+    onHoverArticle?.(null);
+  }, [onHoverArticle]);
 
   // Handle click on star to show article
   const handleStarClick = useCallback((e) => {
     e.stopPropagation();
-    console.log("Star clicked, showing article:", article.title);
     onSelectArticle(article);
   }, [article, onSelectArticle]);
 
@@ -505,42 +820,41 @@ const ArticleStar = ({ article, index, onSelectArticle, isNew }) => {
         <meshBasicMaterial transparent opacity={0} />
       </mesh>
       
-      {/* Glow effect around the star */}
-      <mesh
-        ref={glowRef}
-        scale={[size * 2, size * 2, size * 2]}
-      >
-        <sphereGeometry args={[1, 16, 16]} />
-        <meshBasicMaterial
-          color={sectionColor}
+      <sprite ref={glowRef} scale={[size * 4.8, size * 4.8, 1]}>
+        <spriteMaterial
+          map={starTextures.sparkle}
+          color={haloColor}
           transparent
-          opacity={isNew ? 0.6 : 0.3}
+          opacity={isNew ? 0.28 : 0.14}
+          blending={THREE.AdditiveBlending}
+          depthWrite={false}
         />
-      </mesh>
+      </sprite>
       
-      {/* The actual visible star */}
-      <mesh
-        ref={meshRef}
-        scale={[size, size, size]}
-      >
-        <sphereGeometry args={[1, 16, 16]} />
-        <meshStandardMaterial
-          color={sectionColor}
-          emissive={sectionColor}
-          emissiveIntensity={isNew ? 2 : 1.2}
-          metalness={0.2}
-          roughness={0.3}
+      <sprite ref={starRef} scale={[size * 4.7, size * 4.7, 1]}>
+        <spriteMaterial
+          map={starTexture}
+          color={starColor}
+          transparent
+          opacity={isNew ? 0.92 : 0.8}
+          blending={THREE.AdditiveBlending}
+          depthWrite={false}
         />
-      </mesh>
-      
-      {/* Hover title that appears above the star */}
-      {hovered && (
-        <Html center position={[0, size * 3, 0]} distanceFactor={10}>
-          <StarHoverLabel style={{ borderColor: sectionColor }}>
-            {article.title}
-          </StarHoverLabel>
-        </Html>
+      </sprite>
+
+      {shape !== 'pinpoint' && (
+        <sprite ref={accentRef} scale={[size * 5.1, size * 5.1, 1]}>
+          <spriteMaterial
+            map={starTextures.cross}
+            color={starColor.clone().lerp(new THREE.Color('#c8e8ff'), 0.2)}
+            transparent
+            opacity={0.45}
+            blending={THREE.AdditiveBlending}
+            depthWrite={false}
+          />
+        </sprite>
       )}
+      
     </group>
   );
 };
@@ -559,6 +873,7 @@ function formatDate(dateString) {
 
 // Main visualization component
 const StarfieldVisualization = () => {
+  const starTextures = useStarTextures();
   const { 
     latestArticles, 
     isLoadingLatest, 
@@ -567,10 +882,9 @@ const StarfieldVisualization = () => {
   
   // State for section filtering
   const [selectedSections, setSelectedSections] = useState([]);
-  const [showSectionFilter, setShowSectionFilter] = useState(false);
   
-  // State for selected article
   const [selectedArticle, setSelectedArticle] = useState(null);
+  const [hoveredArticle, setHoveredArticle] = useState(null);
   
   // Track article IDs to detect new articles
   const [knownArticleIds, setKnownArticleIds] = useState(new Set());
@@ -604,7 +918,7 @@ const StarfieldVisualization = () => {
 
   // Handle article selection
   const handleSelectArticle = useCallback((article) => {
-    console.log("Article selected:", article.title);
+    setHoveredArticle(null);
     setSelectedArticle(article);
   }, []);
 
@@ -712,12 +1026,24 @@ const StarfieldVisualization = () => {
         camera={{ position: [0, 0, 50], fov: 60 }} 
         gl={{ antialias: true }}
       >
-        <color attach="background" args={['#050510']} />
-        <ambientLight intensity={0.2} />
-        <pointLight position={[0, 0, 20]} intensity={0.8} />
+        <color attach="background" args={[colors.midnightAbyss]} />
+        <fog attach="fog" args={[colors.midnightAbyss, 70, 210]} />
+        <ambientLight intensity={0.2} color={colors.arcticMist} />
+        <pointLight position={[0, 0, 20]} intensity={0.9} color={colors.comet} />
+        <pointLight position={[-80, 40, -30]} intensity={0.28} color={colors.celestialLight} />
+        <pointLight position={[80, -30, -50]} intensity={0.2} color={colors.neonViolet} />
         
-        {/* Background stars (non-interactive) */}
-        <BackgroundStars count={400} />
+        <DeepNebulaField starTextures={starTextures} count={22} />
+        <AuroraRibbons starTextures={starTextures} />
+        <OrbitalRings />
+        <LightPillars starTextures={starTextures} />
+        <DistantGalaxies starTextures={starTextures} />
+        <ConstellationWeb />
+        <StarClusters starTextures={starTextures} clusterCount={10} />
+        <CosmicDust count={160} starTextures={starTextures} />
+        <NebulaMist starTextures={starTextures} />
+        <BackgroundStars count={900} starTextures={starTextures} />
+        <ShootingStars starTextures={starTextures} />
         
         {/* Articles as stars */}
         {filteredArticles && filteredArticles.length > 0 && filteredArticles.map((article, index) => {
@@ -733,7 +1059,9 @@ const StarfieldVisualization = () => {
               article={article} 
               index={index}
               onSelectArticle={handleSelectArticle}
+              onHoverArticle={setHoveredArticle}
               isNew={isNewArticle}
+              starTextures={starTextures}
             />
           );
         })}
@@ -751,90 +1079,77 @@ const StarfieldVisualization = () => {
           zoomSpeed={0.7}
         />
       </Canvas>
+
+      <HorizonGlow />
+      <SceneVignette />
       
-      {/* Article Overlay (modal) */}
-      {selectedArticle && (
-        <ArticleOverlay onClick={handleCloseArticle}>
-          <ArticleFocusCard onClick={(e) => e.stopPropagation()}>
-            <div className="article-header">
-              <h2>{selectedArticle.title}</h2>
-              <div className="section-tag" style={{ backgroundColor: getSectionColor(selectedArticle.section) }}>
-                {selectedArticle.section}
-              </div>
-            </div>
-            
-            {selectedArticle.abstract && (
-              <p className="article-abstract">{selectedArticle.abstract}</p>
-            )}
-            
-            {selectedArticle.byline && (
-              <p className="article-byline">{selectedArticle.byline.original || selectedArticle.byline}</p>
-            )}
-            
-            <div className="article-meta">
-              <span>Published: {new Date(selectedArticle.published_date || selectedArticle.pub_date).toLocaleString()}</span>
-            </div>
-            
-            <div className="article-actions">
-              <a 
-                href={selectedArticle.url || selectedArticle.web_url} 
-                target="_blank" 
-                rel="noopener noreferrer"
-                className="read-more-btn"
-              >
-                Read Full Article
-              </a>
-              <button onClick={handleCloseArticle} className="close-btn">
-                Close
-              </button>
-            </div>
-          </ArticleFocusCard>
-        </ArticleOverlay>
-      )}
-      
-      {/* Section filter controls */}
-      <ToggleContainer>
-        <div className="toggle-header">
-          <span>NYT News Observatory</span>
-          <span>{articleCount} articles from last 24 hours</span>
-        </div>
-        
-        <div className="toggle-buttons">
-          <SectionFilterButton 
-            onClick={() => setShowSectionFilter(!showSectionFilter)}
-            active={showSectionFilter}
-          >
-            Filter by Section {showSectionFilter ? '▲' : '▼'}
-          </SectionFilterButton>
-        </div>
-        
-        {showSectionFilter && (
-          <SectionFilterContainer>
-            {uniqueSections.map(section => (
-              <SectionFilterButton
-                key={section}
-                onClick={() => toggleSection(section)}
-                active={selectedSections.includes(section)}
-              >
-                <ColorIndicator style={{ backgroundColor: getSectionColor(section) }} />
-                {section.charAt(0).toUpperCase() + section.slice(1)}
-              </SectionFilterButton>
-            ))}
-          </SectionFilterContainer>
+      <HudBar>
+        <HudBrand>
+          <HudTitle>NYT News Observatory</HudTitle>
+          <HudMeta>{articleCount} articles, last 24 hours</HudMeta>
+        </HudBrand>
+        <SectionFilterRow>
+          {uniqueSections.map((section) => (
+            <SectionFilterButton
+              key={section}
+              type="button"
+              onClick={() => toggleSection(section)}
+              $active={selectedSections.includes(section)}
+            >
+              <ColorIndicator $color={getSectionColor(section)} />
+              {section}
+            </SectionFilterButton>
+          ))}
+        </SectionFilterRow>
+      </HudBar>
+
+      <HoverCaption $visible={!!hoveredArticle && !selectedArticle}>
+        {hoveredArticle && (
+          <>
+            <HoverSection>{hoveredArticle.section}</HoverSection>
+            <HoverTitle>{hoveredArticle.title}</HoverTitle>
+          </>
         )}
-      </ToggleContainer>
-      
-      {/* New Articles Notification */}
-      <UpdateNotification className={showNotification ? 'visible' : ''}>
-        🔔 {notificationCount} new articles added
-      </UpdateNotification>
-      
-      {/* Info text */}
-      <InfoText>
-        {selectedArticle 
-          ? 'Press ESC or click outside to close' 
-          : 'Hover to see titles • Click on stars to view articles'}
-      </InfoText>
+      </HoverCaption>
+
+      <Toast $visible={showNotification}>
+        {notificationCount} new {notificationCount === 1 ? 'article' : 'articles'}
+      </Toast>
+
+      {selectedArticle && (
+        <>
+          <ArticleOverlay onClick={handleCloseArticle} aria-hidden />
+          <ArticleCard onClick={(e) => e.stopPropagation()}>
+            <CardClose type="button" onClick={handleCloseArticle} aria-label="Close">
+              Close
+            </CardClose>
+            <CardHeader>
+              <CardMeta>
+                <CardSection>{selectedArticle.section}</CardSection>
+                <CardDate>
+                  {new Date(selectedArticle.published_date || selectedArticle.pub_date).toLocaleDateString('en-US', {
+                    month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit',
+                  })}
+                </CardDate>
+              </CardMeta>
+              <CardTitle>{selectedArticle.title}</CardTitle>
+            </CardHeader>
+            <CardBody>
+              {selectedArticle.abstract && <CardAbstract>{selectedArticle.abstract}</CardAbstract>}
+              {selectedArticle.byline && (
+                <CardByline>{selectedArticle.byline.original || selectedArticle.byline}</CardByline>
+              )}
+            </CardBody>
+            <CardActions>
+              <a href={selectedArticle.url || selectedArticle.web_url} target="_blank" rel="noopener noreferrer">
+                Read article
+              </a>
+              <button type="button" onClick={handleCloseArticle}>Close</button>
+            </CardActions>
+          </ArticleCard>
+        </>
+      )}
+
     </div>
   );
 };

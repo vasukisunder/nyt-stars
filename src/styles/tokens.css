@@ -1,0 +1,69 @@
+:root {
+  /* Colors */
+  --color-midnight-abyss: #05060f;
+  --color-ghost-white: #ffffff;
+  --color-comet: #d8ecf8;
+  --color-arctic-mist: #d1e4fa;
+  --color-celestial-light: #b6d9fc;
+  --color-azure-glow: #c7d3ea;
+  --color-slate-dew: #3f4959;
+  --color-whisper-blue: #9da7ba;
+  --color-neon-violet: #663af3;
+  --color-interstellar-gray: #81899b;
+  --gradient-twilight: linear-gradient(0deg, rgb(216, 236, 248) 0%, rgb(152, 192, 239) 100%);
+  --gradient-highlight-border: linear-gradient(90deg, rgba(0, 0, 0, 0), rgba(186, 215, 247, 0.12), rgba(0, 0, 0, 0));
+
+  /* Typography */
+  --font-body: 'Geist', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-display: 'Geist', var(--font-body);
+  --font-mono: 'Geist Mono', ui-monospace, monospace;
+
+  --text-caption: 12px;
+  --text-body: 14px;
+  --text-body-lg: 16px;
+  --text-subheading: 18px;
+  --text-heading: 24px;
+  --text-heading-lg: 28px;
+  --text-display: 44px;
+
+  --leading-body: 1.5;
+  --leading-subheading: 1.43;
+  --leading-heading: 1.33;
+  --tracking-body: -0.01em;
+
+  /* Spacing */
+  --spacing-8: 8px;
+  --spacing-12: 12px;
+  --spacing-16: 16px;
+  --spacing-20: 20px;
+  --spacing-24: 24px;
+  --spacing-32: 32px;
+  --spacing-48: 48px;
+  --card-padding: 24px;
+  --element-gap: 8px;
+
+  /* Radius */
+  --radius-badge: 6px;
+  --radius-card: 14px;
+  --radius-input: 4px;
+  --radius-pill: 999px;
+
+  /* Surfaces */
+  --surface-glass: rgba(186, 214, 247, 0.03);
+  --surface-glass-border: rgba(186, 215, 247, 0.12);
+  --surface-pill: rgba(186, 214, 247, 0.06);
+  --surface-login: rgba(5, 6, 15, 0.97);
+  --surface-input: rgba(199, 211, 234, 0.06);
+
+  /* Shadows */
+  --shadow-glass: rgba(199, 211, 234, 0.12) 0px 1px 1px 0px inset,
+    rgba(199, 211, 234, 0.05) 0px 24px 48px 0px inset,
+    rgba(6, 6, 14, 0.7) 0px 24px 32px 0px;
+  --shadow-login: rgba(216, 236, 248, 0.2) 0px 1px 1px 0px inset,
+    rgba(168, 216, 245, 0.06) 0px 24px 48px 0px inset,
+    rgba(0, 0, 0, 0.3) 0px 16px 32px 0px;
+  --shadow-pill-inset: rgba(186, 214, 247, 0.06) 0px 0px 0px 1px inset;
+  --shadow-outline-inset: rgba(186, 215, 247, 0.12) 0px 0px 0px 1px inset;
+  --shadow-glow-sm: rgba(186, 207, 247, 0.32) 0px 0px 6px 0px;
+  --shadow-glow-md: rgba(238, 186, 247, 0.24) 0px 0px 12px 0px;
+}
